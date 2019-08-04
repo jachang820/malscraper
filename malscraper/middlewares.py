@@ -5,9 +5,24 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-from random import choice
 from scrapy import signals
-from scrapy.exceptions import NotConfigured
+
+
+class RotateUserAgentMiddleware(object):
+
+    def __init__self, user_agents = []):
+        self.user_agents = user_agents
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        user_agents = crawler.settings.get('USER_AGENTS', [])
+        return cls(user_agents)
+
+    def process_request(self, request, spider):
+        if self.user_agents:
+            request.headers['User-Agent'] = random.choice(self.user_agents)
+            spider.log(u'User-Agent: {0} {1}'.format(request.header.get('User-Agent'), request),
+                level = log.DEBUG)
 
 
 class MalscraperSpiderMiddleware(object):

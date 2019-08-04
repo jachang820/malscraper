@@ -4,7 +4,7 @@ Scrape [MAL](http://myanimelist.com/) for basic anime information using scrapy.p
 
 ## Built With
 
-* [Scrapy 1.7.3](https://scrapy.org/) - Scraping framework for Python
+* [Scrapy 1.7.3](https://scrapy.org/) - Scraping framework for Pythonmiddleware.
 
 ## Authors
 
