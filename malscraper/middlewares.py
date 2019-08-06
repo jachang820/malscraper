@@ -6,11 +6,12 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+import random
 
 
 class RotateUserAgentMiddleware(object):
 
-    def __init__self, user_agents = []):
+    def __init__(self, user_agents = []):
         self.user_agents = user_agents
 
     @classmethod
@@ -21,8 +22,6 @@ class RotateUserAgentMiddleware(object):
     def process_request(self, request, spider):
         if self.user_agents:
             request.headers['User-Agent'] = random.choice(self.user_agents)
-            spider.log(u'User-Agent: {0} {1}'.format(request.header.get('User-Agent'), request),
-                level = log.DEBUG)
 
 
 class MalscraperSpiderMiddleware(object):

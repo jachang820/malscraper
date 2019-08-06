@@ -8,7 +8,9 @@
 import scrapy
 
 
-class MalscraperItem(scrapy.Item):
+class ImageItem(scrapy.Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+    image_urls = scrapy.Field()
+    num = scrapy.Field()
+    max_downloads = scrapy.Field()
+    images = scrapy.Field()
