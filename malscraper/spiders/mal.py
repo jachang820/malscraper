@@ -39,20 +39,18 @@ class MalSpider(scrapy.Spider):
             self.parse_opening(response, json)
             self.parse_ending(response, json)
             if meta['hasEpisodes']:
-                episodes = '{0}/episode'.format(meta['canonical'])
-                request = scrapy.Request(url = episodes, 
+                episodes = '{0}/episode?offset=0'.format(meta['canonical'])
+                yield scrapy.Request(url = episodes, 
                     callback = self.parse_episodes,
                     cb_kwargs = dict(num = meta['num'], json = json))
-                yield request
             else:
                 self.save_data(meta['num'], json)
 
             if meta['hasPics']:
                 pictures = '{0}/pics'.format(meta['canonical'])
-                request = scrapy.Request(url = pictures, 
+                yield scrapy.Request(url = pictures, 
                     callback = self.parse_pictures,
                     cb_kwargs = dict(num = meta['num']))
-                yield request
 
         # Store latest anime number on disk.
         num = int(response.url.split("/")[4])
@@ -63,10 +61,12 @@ class MalSpider(scrapy.Spider):
 
     def parse_episodes(self, response, num, json):
         print("Parsing episodes...")
-        json['Episodes'] = {}
+        if 'Episodes' not in json:
+            json['Episodes'] = {}
         episode = response.css("table.episode_list.ascend tr:nth-child(2)")
         while episode.get():
-            ep_num = "0000{0}".format(len(json['Episodes']) + 1)[-4:]
+            ep_num = episode.xpath("td[contains(@class, 'episode-number')]")
+            ep_num = "0000{0}".format(ep_num.xpath("normalize-space()").get())[-4:]
             english = episode.xpath("normalize-space(td[@class='episode-title']/a)").get()
             japanese = episode.xpath("normalize-space(td[@class='episode-title']/span)").get()
             aired = episode.xpath("normalize-space(td[contains(@class, 'episode-aired')])").get()
@@ -78,7 +78,19 @@ class MalSpider(scrapy.Spider):
 
             episode = episode.xpath("following-sibling::*[1]")
 
-        self.save_data(num, json)
+        # Pagination
+        url = response.url.split("=")[0]
+        offset = int(response.url.split("=")[-1])
+        pages = response.xpath("descendant::div[contains(@class, 'pagination')]")
+        current_page = pages.xpath("a[contains(@class, 'current')]")
+        next_page_link = current_page.xpath("following-sibling::a[1]/@href").get()
+        if next_page_link:
+            yield scrapy.Request(url = next_page_link, 
+                callback = self.parse_episodes,
+                cb_kwargs = dict(num = num, json = json))
+
+        else:
+            self.save_data(num, json)
 
     def parse_pictures(self, response, num):
         print("Parsing pictures...")
@@ -103,8 +115,9 @@ class MalSpider(scrapy.Spider):
         return meta, json
 
     def parse_titles(self, response, json):
+        main_title = response.xpath("normalize-space(//h1)").get()
         titles = response.xpath("//h2[contains(., 'Alternative Titles')]")
-        json['Title'] = {}
+        json['Title'] = { 'Romaji': main_title }
         while True:
             titles = titles.xpath("following-sibling::*[1]")
             if titles.xpath("name()").get() == 'div':
@@ -129,6 +142,9 @@ class MalSpider(scrapy.Spider):
 
             else:
                 break
+
+        if not json['Information']['Episodes']:
+            json['Information']['Episodes'] = "1"
 
     def parse_related(self, response, json):
         related = response.xpath("//h2[contains(., 'Related Anime')]")
