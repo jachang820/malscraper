@@ -9,7 +9,7 @@ class MalSpider(scrapy.Spider):
     name = 'mal'
     allowed_domains = ['myanimelist.net']
     start_urls = ['https://myanimelist.net/']
-    batch_size = 1
+    batch_size = 50
     path = './malscraper/output/'
     max_images_per_item = 4
 
