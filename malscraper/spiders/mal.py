@@ -9,7 +9,7 @@ class MalSpider(scrapy.Spider):
     name = 'mal'
     allowed_domains = ['myanimelist.net']
     start_urls = ['https://myanimelist.net/']
-    batch_size = 300
+    batch_size = 1
     path = './malscraper/output/'
     max_images_per_item = 4
 
@@ -97,9 +97,8 @@ class MalSpider(scrapy.Spider):
         pictures = response.xpath("//h2[contains(., 'Pictures')]")
         pictures = pictures.xpath("following-sibling::table[1]")
         pictures = pictures.xpath("descendant::div[@class='picSurround']/a/@href").getall()
-        yield ImageItem(image_urls = pictures, 
-            num = num, 
-            max_downloads = MalSpider.max_images_per_item)
+        pictures = pictures[:MalSpider.max_images_per_item]
+        yield ImageItem(image_urls = pictures, num = num)
 
     def setup_metadata(self, response):
         meta = {}

@@ -9,19 +9,17 @@ from scrapy.pipelines.images import ImagesPipeline
 
 class MalscraperImagePipeline(ImagesPipeline):
     def get_media_requests(self, item, info):
-        count = len(item['image_urls'])
-        if count > item['max_downloads']:
-            count = item['max_downloads']
-        for i in range(count):
-            url = item['image_urls'][i]
-            yield scrapy.Request(url, meta = dict(num = item['num']), 
-                errback = lambda err: self.retry(err, url, item['num']))
-
-    def retry(self, err, url, num):
-        print("Retrying download...")
-        yield scrapy.Request(url, meta = dict(num = num))
+        for url in item['image_urls']:
+            yield scrapy.Request(url, meta = dict(num = item['num']))
 
     def file_path(self, request, response = None, info = None):
         filename = request.url.split("/")[-1]
         num = request.meta['num']
         return "{0}/{1}".format(num, filename)
+
+    def item_completed(self, results, item, info):
+        for ok, x in results:
+            if not ok:
+                num = x['path'].split("/")[0]
+                yield scrapy.Request(x['url'], meta = dict(num = num))
+        return item

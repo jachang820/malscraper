@@ -12,5 +12,4 @@ class ImageItem(scrapy.Item):
     # define the fields for your item here like:
     image_urls = scrapy.Field()
     num = scrapy.Field()
-    max_downloads = scrapy.Field()
     images = scrapy.Field()
