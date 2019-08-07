@@ -14,7 +14,12 @@ class MalscraperImagePipeline(ImagesPipeline):
             count = item['max_downloads']
         for i in range(count):
             url = item['image_urls'][i]
-            yield scrapy.Request(url, meta = dict(num = item['num']))
+            yield scrapy.Request(url, meta = dict(num = item['num']), 
+                errback = lambda err: self.retry(err, url, item['num']))
+
+    def retry(self, err, url, num):
+        print("Retrying download...")
+        yield scrapy.Request(url, meta = dict(num = num))
 
     def file_path(self, request, response = None, info = None):
         filename = request.url.split("/")[-1]
