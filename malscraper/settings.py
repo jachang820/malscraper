@@ -83,6 +83,7 @@ ITEM_PIPELINES = {
     'malscraper.pipelines.MalscraperImagePipeline': 1,
 }
 IMAGES_STORE = './malscraper/output'
+MEDIA_ALLOW_REDIRECTS = True
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

@@ -10,7 +10,6 @@ class MalSpider(scrapy.Spider):
     allowed_domains = ['myanimelist.net']
     start_urls = ['https://myanimelist.net/']
     path = './malscraper/output/'
-    max_images_per_item = 4
 
     def start_requests(self):
         num = self.last_num()
@@ -150,6 +149,8 @@ class MalSpider(scrapy.Spider):
                 category = info.xpath("span/text()").get()[:-1]
                 data = info.xpath("normalize-space()").get()
                 data = data[data.find(":") + 2:]
+                if data == "None found, add some":
+                    data = ""
                 json['Information'][category] = data
 
             else:
