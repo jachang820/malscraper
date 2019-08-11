@@ -16,10 +16,3 @@ class MalscraperImagePipeline(ImagesPipeline):
         filename = request.url.split("/")[-1]
         num = request.meta['num']
         return "{0}/{1}".format(num, filename)
-
-    def item_completed(self, results, item, info):
-        for ok, x in results:
-            if not ok:
-                num = x['path'].split("/")[0]
-                yield scrapy.Request(x['url'], meta = dict(num = num))
-        return item

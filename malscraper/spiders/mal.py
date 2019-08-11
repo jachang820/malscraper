@@ -9,26 +9,36 @@ class MalSpider(scrapy.Spider):
     name = 'mal'
     allowed_domains = ['myanimelist.net']
     start_urls = ['https://myanimelist.net/']
-    batch_size = 1
     path = './malscraper/output/'
     max_images_per_item = 4
 
-    def __init__(self):
-        self.visited = 0
-
     def start_requests(self):
         num = self.last_num()
-        while self.visited < MalSpider.batch_size:
+        self.visited = 0
+
+        # n is a command line parameter specifying number of valid titles to scrape.
+        if not hasattr(self, 'n') or self.n is None or not self.n.isdecimal():
+            self.n = 1000
+        else:
+            self.n = int(self.n)
+
+        # images is a command line parameter specifying max images per title to scrape.
+        if not hasattr(self, 'images') or self.images is None or not self.images.isdecimal():
+            self.images = 4
+        else:
+            self.images = int(self.images)
+
+        while self.visited < self.n:
             num += 1
             details = 'https://myanimelist.net/anime/{0}'.format(num)
             yield scrapy.Request(url = details, callback = self.parse_details)
 
 
     def parse_details(self, response):
-        print("Parsing details...")
         if "404 Not Found" not in response.xpath("normalize-space(//title/text())").get():
             self.visited += 1
             meta, json = self.setup_metadata(response)
+            print("Parsing details... {0}.".format(json['num']))
 
             # Updates json.
             self.parse_titles(response, json)
@@ -52,6 +62,9 @@ class MalSpider(scrapy.Spider):
                     callback = self.parse_pictures,
                     cb_kwargs = dict(num = meta['num']))
 
+        else:
+            print("{0} is a 404.".format(response.url.split("/")[4]))
+
         # Store latest anime number on disk.
         num = int(response.url.split("/")[4])
         if self.last_num() < num:
@@ -60,7 +73,7 @@ class MalSpider(scrapy.Spider):
             
 
     def parse_episodes(self, response, num, json):
-        print("Parsing episodes...")
+        print("Parsing episodes... {0}.".format(num))
         if 'Episodes' not in json:
             json['Episodes'] = {}
         episode = response.css("table.episode_list.ascend tr:nth-child(2)")
@@ -93,11 +106,11 @@ class MalSpider(scrapy.Spider):
             self.save_data(num, json)
 
     def parse_pictures(self, response, num):
-        print("Parsing pictures...")
+        print("Parsing pictures... {0}.".format(num))
         pictures = response.xpath("//h2[contains(., 'Pictures')]")
         pictures = pictures.xpath("following-sibling::table[1]")
         pictures = pictures.xpath("descendant::div[@class='picSurround']/a/@href").getall()
-        pictures = pictures[:MalSpider.max_images_per_item]
+        pictures = pictures[:self.images]
         yield ImageItem(image_urls = pictures, num = num)
 
     def setup_metadata(self, response):

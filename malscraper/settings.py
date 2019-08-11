@@ -67,6 +67,8 @@ COOKIES_ENABLED = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     'malscraper.middlewares.RotateUserAgentMiddleware': 110,
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
+    'scrapy.downloadermiddlewares.redirect.RedirectMiddleware': 551
 }
 
 # Enable or disable extensions
